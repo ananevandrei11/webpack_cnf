@@ -4,7 +4,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
-  mode: 'development',
+  mode: 'production',
   entry: {
     main: './src/index.js',
   },
@@ -26,7 +26,7 @@ module.exports = {
       },
     },
   },
-  devtool: 'source-map',
+  devtool: 'eval',
   devServer: {
     contentBase: './dist',
   },
@@ -38,7 +38,7 @@ module.exports = {
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
-      chunkFilename: '[id].css',
+      chunkFilename: '[name].css',
       path: path.resolve(__dirname, 'dist'),
     })
   ],
@@ -72,7 +72,8 @@ module.exports = {
         ]
       },
       // FOR ONLY HTML
-      /* {
+      /*
+      {
         test: /\.html$/i,
         use: [
           {
@@ -90,7 +91,9 @@ module.exports = {
             }
           }
         ]
-      }, */
+      },
+      */
+      // FOR PUG
       {
         test: /\.pug$/,
         use: [
@@ -109,12 +112,9 @@ module.exports = {
             }
           },
           {
-            loader: 'pug-html-loader',
-            options: {
-              pretty: true
-            }
+            loader: 'pug-html-loader'
           }
-        ],
+        ]
       },
       {
         test: /\.css$/,
@@ -148,7 +148,7 @@ module.exports = {
                   ['cssnano', {
                     preset: [
                       'default', {
-                        normalizeWhitespace: false,
+                        normalizeWhitespace: true,
                         discardComments: {
                           removeAll: true,
                         }
