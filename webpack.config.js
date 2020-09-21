@@ -26,7 +26,7 @@ module.exports = {
       },
     },
   },
-  devtool: 'inline-source-map',
+  devtool: 'eval',
   devServer: {
     contentBase: './dist',
   },
@@ -45,15 +45,109 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.css$/,
+        enforce: 'pre',
+        test: /\.m?js$/,
+        exclude: /node_modules/,
         use: [
-          MiniCssExtractPlugin.loader,
-          'css-loader'
+          {
+            loader: 'eslint-loader',
+            options: {
+              sourceMap: true,
+              cache: true,
+            },
+          }
         ]
       },
       {
-        test: /\.(png|svg|jpg|gif)$/,
+        test: /\.m?js$/,
+        exclude: /(node_modules|bower_components)/,
         use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/preset-env'],
+              cacheDirectory: true
+            }
+          }
+        ]
+      },
+      {
+        test: /\.html$/i,
+        use: [
+          {
+            loader: 'html-loader',
+            options: {
+              attributes: {
+                list: [
+                  {
+                    tag: 'img',
+                    attribute: 'src',
+                    type: 'src',
+                  },
+                ],
+              }
+            }
+          }
+        ]
+      },
+      {
+        test: /\.css$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader'
+          }
+        ]
+      },
+      {
+        test: /\.s[ac]ss$/i,
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader'
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: [
+                  ['postcss-preset-env', {
+                    browsers: [
+                      'last 2 version'
+                    ],
+                    autoprefixer: true,
+                  }],
+                  ['css-mqpacker'],
+                  ['postcss-import'],
+                  ['cssnano', {
+                    preset: [
+                      'default', {
+                        normalizeWhitespace: false,
+                        discardComments: {
+                          removeAll: true,
+                        }
+                      }
+                    ]
+                  }]
+                ]
+              }
+            }
+          },
+          {
+            loader: 'sass-loader',
+            options: {
+              implementation: require('sass'),
+              sassOptions: {
+                fiber: require('fibers'),
+              }
+            }
+          }
+        ]
+      },
+      {
+        test: /\.(png|svg|webp|jpg|gif)$/,
+        use: [
+          // COMMON LOAD IMAGES
           {
             loader: 'file-loader',
             options: {
@@ -61,7 +155,43 @@ module.exports = {
               outputPath: './images',
               useRelativePath: true,
             },
-          }
+          },
+          {
+            loader: 'image-webpack-loader',
+            options: {
+              mozjpeg: {
+                progressive: true,
+              },
+              optipng: {
+                enabled: false,
+              },
+              pngquant: {
+                quality: [0.2, 0.80],
+                speed: 4
+              },
+              gifsicle: {
+                interlaced: false,
+              },
+              webp: {
+                quality: 50
+              }
+            }
+          },
+          // LOAD AND CHANGE ALL IMAGES INTO WEBP
+          /*{
+            loader: `img-optimize-loader`,
+            options: {
+              name: '[name].[ext]',
+              outputPath: './images',
+              compress: {
+                webp: true,
+                disableOnDevelopment: true,
+                webp: {
+                  quality: 50,
+                }
+              },
+            },
+          }*/
         ]
       },
       {
