@@ -1,7 +1,9 @@
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
 
 module.exports = {
   mode: 'development',
@@ -9,7 +11,7 @@ module.exports = {
     main: './src/index.js',
   },
   output: {
-    filename: '[name].js',
+    filename: '[name].[contenthash].js',
     path: path.resolve(__dirname, 'dist'),
   },
   optimization: {
@@ -32,15 +34,35 @@ module.exports = {
   },
   plugins: [
     new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
+    new webpack.ProvidePlugin({
+      $: "jquery",
+      jQuery: "jquery",
+      "window.jQuery": "jquery"
+    }),
     new HtmlWebpackPlugin({
       filename: 'index.html',
-      template: './src/index.pug',
+      template: './src/index.pug'
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
-      chunkFilename: '[id].css',
+      chunkFilename: '[id].[contenthash].css',
       path: path.resolve(__dirname, 'dist'),
-    })
+    }),
+    new ImageMinimizerPlugin({
+      minimizerOptions: {
+        plugins: [
+          ['gifsicle', { interlaced: true }],
+          ['jpegtran', { progressive: true }],
+          ['mozjpeg', { quality: 80 }],
+          ['optipng', { optimizationLevel: 4 }],
+          ['pngquant', {quality: [0.6, 0.8]}],
+          ['svgo', { plugins: [{
+                  removeViewBox: false,
+            }]}
+          ],
+        ],
+      },
+    }),
   ],
   module: {
     rules: [
@@ -85,6 +107,11 @@ module.exports = {
                     attribute: 'src',
                     type: 'src',
                   },
+                  {
+                    tag: 'img',
+                    attribute: 'srcset',
+                    type: 'srcset',
+                  },
                 ],
               }
             }
@@ -103,6 +130,11 @@ module.exports = {
                     tag: 'img',
                     attribute: 'src',
                     type: 'src',
+                  },
+                  {
+                    tag: 'img',
+                    attribute: 'srcset',
+                    type: 'srcset',
                   },
                 ],
               }
@@ -139,7 +171,10 @@ module.exports = {
                 plugins: [
                   ['postcss-preset-env', {
                     browsers: [
-                      'last 2 version'
+                      'last 3 versions',
+                      '> .5%',
+                      'IE 10',
+                      'IE 11'
                     ],
                     autoprefixer: true,
                   }],
@@ -177,31 +212,10 @@ module.exports = {
           {
             loader: 'file-loader',
             options: {
-              name: '[name].[ext]',
+              name: '[name].[contenthash].[ext]',
               outputPath: './images',
               useRelativePath: true,
             },
-          },
-          {
-            loader: 'image-webpack-loader',
-            options: {
-              mozjpeg: {
-                progressive: true,
-              },
-              optipng: {
-                enabled: false,
-              },
-              pngquant: {
-                quality: [0.2, 0.80],
-                speed: 4
-              },
-              gifsicle: {
-                interlaced: false,
-              },
-              webp: {
-                quality: 50
-              }
-            }
           },
           // LOAD AND CHANGE ALL IMAGES INTO WEBP
           /*{
@@ -225,7 +239,7 @@ module.exports = {
         use: [{
           loader: 'file-loader',
           options: {
-            name: '[name].[ext]',
+            name: '[name].[contenthash].[ext]',
             outputPath: './fonts',
             useRelativePath: true,
           }

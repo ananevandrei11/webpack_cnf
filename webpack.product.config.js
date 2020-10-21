@@ -1,10 +1,12 @@
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
 
 module.exports = {
-  mode: 'production',
+  mode: 'none', // FOR  MINIFICATION FALSE OR FOR MINIFICATION TRUE - mode: 'production
   entry: {
     main: './src/index.js',
   },
@@ -26,21 +28,42 @@ module.exports = {
       },
     },
   },
-  devtool: 'eval',
+  //devtool: 'eval', // FOR SPEED
   devServer: {
     contentBase: './dist',
   },
   plugins: [
     new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
+    new webpack.ProvidePlugin({
+      $: "jquery",
+      jQuery: "jquery",
+      "window.jQuery": "jquery"
+    }),
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: './src/index.pug',
+      minify: false
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[name].css',
       path: path.resolve(__dirname, 'dist'),
-    })
+    }),
+    new ImageMinimizerPlugin({
+      minimizerOptions: {
+        plugins: [
+          ['gifsicle', { interlaced: true }],
+          ['jpegtran', { progressive: true }],
+          ['mozjpeg', { quality: 80 }],
+          ['optipng', { optimizationLevel: 4 }],
+          ['pngquant', {quality: [0.6, 0.8]}],
+          ['svgo', { plugins: [{
+                  removeViewBox: false,
+            }]}
+          ],
+        ],
+      },
+    }),
   ],
   module: {
     rules: [
@@ -86,6 +109,11 @@ module.exports = {
                     attribute: 'src',
                     type: 'src',
                   },
+                  {
+                    tag: 'img',
+                    attribute: 'srcset',
+                    type: 'srcset',
+                  },
                 ],
               }
             }
@@ -107,12 +135,17 @@ module.exports = {
                     attribute: 'src',
                     type: 'src',
                   },
+                  {
+                    tag: 'img',
+                    attribute: 'srcset',
+                    type: 'srcset',
+                  },
                 ],
               }
             }
           },
           {
-            loader: 'pug-html-loader'
+            loader: 'pug-html-loader?pretty=true'
           }
         ]
       },
@@ -139,7 +172,9 @@ module.exports = {
                 plugins: [
                   ['postcss-preset-env', {
                     browsers: [
-                      'last 2 version'
+                      'last 3 versions',
+                      '> .5%',
+                      'IE 11'
                     ],
                     autoprefixer: true,
                   }],
@@ -148,7 +183,7 @@ module.exports = {
                   ['cssnano', {
                     preset: [
                       'default', {
-                        normalizeWhitespace: true,
+                        normalizeWhitespace: false,
                         discardComments: {
                           removeAll: true,
                         }
@@ -171,7 +206,7 @@ module.exports = {
         ]
       },
       {
-        test: /\.(png|svg|webp|jpg|gif)$/,
+        test: /\.(png|svg|webp|jpe?g|gif)$/i,
         use: [
           // COMMON LOAD IMAGES
           {
@@ -181,27 +216,6 @@ module.exports = {
               outputPath: './images',
               useRelativePath: true,
             },
-          },
-          {
-            loader: 'image-webpack-loader',
-            options: {
-              mozjpeg: {
-                progressive: true,
-              },
-              optipng: {
-                enabled: false,
-              },
-              pngquant: {
-                quality: [0.2, 0.80],
-                speed: 4
-              },
-              gifsicle: {
-                interlaced: false,
-              },
-              webp: {
-                quality: 50
-              }
-            }
           },
           // LOAD AND CHANGE ALL IMAGES INTO WEBP
           /*{
